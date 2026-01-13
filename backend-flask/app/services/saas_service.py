@@ -1,7 +1,8 @@
 from app.extensions import db
 from app.models.saas import AdminSaas, Plan, Suscripcion
+from app.models.token_blocklist import TokenBlocklist
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, get_jwt
 import uuid
 from datetime import datetime
 
@@ -67,6 +68,25 @@ def login_admin_saas_service(data):
         }, 200
     
     return {"error": "Credenciales inválidas"}, 401
+
+def logout_admin_saas_service():
+    """
+    Cierra la sesión del Administrador SaaS.
+    Podríamos agregar logs de auditoría aquí en el futuro.
+    """
+    try:
+        # 1. Obtener el identificador único del token (JTI)
+        jti = get_jwt()["jti"]
+        
+        # 2. Guardarlo en la Blocklist
+        revoked_token = TokenBlocklist(jti=jti)
+        db.session.add(revoked_token)
+        db.session.commit()
+        
+        return {"message": "Admin SaaS: Sesión cerrada correctamente"}, 200
+    except Exception as e:
+        db.session.rollback()
+        return {"error": "Error al cerrar sesión: " + str(e)}, 500
 
 def obtener_admins_saas_service():
     admins = AdminSaas.query.all()

@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required
 from app.utils.security import role_required
 from app.services.seguridad_service import (
     crear_rol_service, obtener_roles_service, obtener_rol_por_id_service,
@@ -6,7 +7,7 @@ from app.services.seguridad_service import (
     crear_usuario_service, obtener_usuarios_service, obtener_usuario_por_id_service,
     actualizar_usuario_service, eliminar_usuario_service,
     registrar_empresa_y_dueno_service,
-    login_usuario_service
+    login_usuario_service, logout_service
 )
 
 seguridad_bp = Blueprint('seguridad_bp', __name__)
@@ -26,6 +27,12 @@ def register_company():
 def login():
     data = request.get_json()
     response, status = login_usuario_service(data)
+    return jsonify(response), status
+
+@seguridad_bp.route('/auth/logout', methods=['POST'])
+@jwt_required() # IMPORTANTE: Solo puede salir quien está dentro
+def logout():
+    response, status = logout_service()
     return jsonify(response), status
 
 
@@ -103,3 +110,4 @@ def update_usuario(id_usuario):
 def delete_usuario(id_usuario):
     response, status = eliminar_usuario_service(id_usuario)
     return jsonify(response), status
+

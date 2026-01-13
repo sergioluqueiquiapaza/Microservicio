@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify
 from app.utils.security import role_required
+from flask_jwt_extended import jwt_required
 from app.services.saas_service import (
     # Admin SaaS
-    crear_admin_saas_service, login_admin_saas_service, obtener_admins_saas_service,
+    crear_admin_saas_service, login_admin_saas_service, obtener_admins_saas_service, logout_admin_saas_service,
     # Planes
     crear_plan_service, obtener_planes_service, obtener_plan_id_service, 
     actualizar_plan_service, eliminar_plan_service,
@@ -23,6 +24,13 @@ def create_admin_saas():
 @saas_bp.route('/saas/login', methods=['POST'])
 def login_admin_saas():
     response, status = login_admin_saas_service(request.get_json())
+    return jsonify(response), status
+
+@saas_bp.route('/saas/logout', methods=['POST'])
+@jwt_required()
+def logout_saas():
+    # Llamamos al servicio específico de SaaS
+    response, status = logout_admin_saas_service()
     return jsonify(response), status
 
 @saas_bp.route('/saas/admins', methods=['GET'])

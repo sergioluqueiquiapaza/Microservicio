@@ -3,6 +3,7 @@ from app.extensions import db
 import os
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
+from app.models.token_blocklist import TokenBlocklist
 
 # Cargar variables de entorno del archivo .env
 load_dotenv() 
@@ -26,6 +27,13 @@ def create_app():
     db.init_app(app)
     jwt = JWTManager(app)
 
+    # Callback para verificar si un token está en la lista de bloqueo
+    @jwt.token_in_blocklist_loader
+    def check_if_token_revoked(jwt_header, jwt_payload):
+        jti = jwt_payload["jti"]
+        token = db.session.query(TokenBlocklist.id).filter_by(jti=jti).scalar()
+        return token is not None
+    
     # --- REGISTRO DE BLUEPRINTS ---
     from app.routes.empresa_routes import empresa_bp
     from app.routes.seguridad_routes import seguridad_bp

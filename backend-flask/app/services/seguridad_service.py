@@ -1,10 +1,12 @@
 from app.extensions import db
 from app.models.seguridad import Rol, Usuario
 from app.models.empresa import Empresa, ConfiguracionEmpresa
+from app.models.token_blocklist import TokenBlocklist
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_jwt_extended import create_access_token
-import uuid
+from flask_jwt_extended import create_access_token, get_jwt
 from datetime import datetime
+import uuid
+
 
 # ==================== CRUD ROL ====================
 
@@ -91,7 +93,12 @@ def crear_usuario_service(data):
             id_usuario=nuevo_id,
             id_empresa=data['id_empresa'],
             id_rol=data['id_rol'],
-            nombre_completo=data.get('nombre_completo'),
+            
+            # CORRECCIÓN: Usar campos separados
+            nombres=data.get('nombres'),
+            apellido_paterno=data.get('paterno'),
+            apellido_materno=data.get('materno'),
+            
             email=data.get('email'),
             password_hash=pass_hash, 
             telefono=data.get('telefono'),
@@ -120,7 +127,13 @@ def actualizar_usuario_service(id_usuario, data):
     if not usuario:
         return {"error": "Usuario no encontrado"}, 404
     try:
-        if 'nombre_completo' in data: usuario.nombre_completo = data['nombre_completo']
+        # CORRECCIÓN: Reemplazamos 'nombre_completo' por los campos individuales
+        # Usamos las mismas claves JSON que en el registro ('paterno', 'materno')
+        if 'nombres' in data: usuario.nombres = data['nombres']
+        if 'paterno' in data: usuario.apellido_paterno = data['paterno']
+        if 'materno' in data: usuario.apellido_materno = data['materno']
+        
+        # Resto de campos
         if 'email' in data: usuario.email = data['email']
         if 'id_rol' in data: usuario.id_rol = data['id_rol']
         if 'telefono' in data: usuario.telefono = data['telefono']
@@ -164,7 +177,7 @@ def login_usuario_service(data):
         if not usuario.activo:
             return {"error": "Usuario inactivo. Contacte al administrador."}, 401
             
-        # Crear Token JWT con Claims adicionales (Información extra dentro del token)
+        # Crear Token JWT con Claims adicionales
         additional_claims = {
             "rol": usuario.id_rol, 
             "id_empresa": usuario.id_empresa
@@ -175,12 +188,17 @@ def login_usuario_service(data):
         usuario.ultimo_acceso = datetime.utcnow()
         db.session.commit()
         
+        # --- CORRECCIÓN ---
+        # Construimos el nombre uniendo los campos nuevos (nombres + apellido)
+        # Usamos .strip() por si alguno está vacío o tiene espacios extra
+        nombre_visual = f"{usuario.nombres} {usuario.apellido_paterno}".strip()
+        
         return {
             "message": "Login exitoso",
             "token": token,
             "usuario": {
                 "id_usuario": usuario.id_usuario,
-                "nombre": usuario.nombre_completo,
+                "nombre": nombre_visual, # <--- AQUÍ ESTABA EL ERROR
                 "rol": usuario.id_rol,
                 "id_empresa": usuario.id_empresa
             }
@@ -188,10 +206,24 @@ def login_usuario_service(data):
     
     return {"error": "Credenciales inválidas"}, 401
 
+def logout_service():
+    try:
+        # Obtener el 'jti' (Identificador único) del token actual
+        jti = get_jwt()["jti"]
+        
+        # Guardarlo en la base de datos (Lista Negra)
+        revoked_token = TokenBlocklist(jti=jti)
+        db.session.add(revoked_token)
+        db.session.commit()
+        
+        return {"message": "Sesión cerrada exitosamente. Token invalidado."}, 200
+    except Exception as e:
+        db.session.rollback()
+        return {"error": str(e)}, 500
+
 def registrar_empresa_y_dueno_service(data):
     """
-    Endpoint PÚBLICO para el registro de nuevas cuentas (SaaS Onboarding).
-    Crea: Empresa -> Configuración -> Usuario (Admin) en una sola transacción.
+    Endpoint PÚBLICO para el registro de nuevas cuentas.
     """
     try:
         # 1. Validaciones
@@ -226,30 +258,36 @@ def registrar_empresa_y_dueno_service(data):
         )
 
         # 5. Crear USUARIO DUEÑO
-        # IMPORTANTE: Asumimos que el rol 'PROPIETARIO' o 'ADMIN' ya existe en la BD (seed).
-        # Si no tienes roles creados, esto fallará por FK.
         rol_inicial = 'PROPIETARIO' 
         
         pass_hash = generate_password_hash(data['password'])
+        
+        # --- AQUÍ ESTABA EL ERROR ---
+        # Ahora asignamos nombres y apellidos por separado
         nuevo_usuario = Usuario(
             id_usuario=id_usuario_new,
             id_empresa=id_empresa_new,
-            id_rol=rol_inicial, 
-            nombre_completo=data.get('nombre_completo', 'Administrador'),
+            id_rol=rol_inicial,
+            
+            # Mapeo de campos JSON a columnas de BD
+            nombres=data.get('nombres', 'Administrador'), 
+            apellido_paterno=data.get('paterno', ''), # Usamos 'paterno' del JSON
+            apellido_materno=data.get('materno', ''), # Usamos 'materno' del JSON
+            
             email=data['email'],
             password_hash=pass_hash,
             telefono=data.get('telefono'),
             activo=True
         )
 
-        # 6. Guardar todo (Atomicidad)
+        # 6. Guardar todo
         db.session.add(nueva_empresa)
         db.session.add(nueva_config)
         db.session.add(nuevo_usuario)
         
         db.session.commit()
 
-        # 7. Auto-Login (Generar token para entrar directo)
+        # 7. Auto-Login
         additional_claims = {"rol": rol_inicial, "id_empresa": id_empresa_new}
         token = create_access_token(identity=id_usuario_new, additional_claims=additional_claims)
 
@@ -257,7 +295,7 @@ def registrar_empresa_y_dueno_service(data):
             "message": "Registro exitoso. ¡Bienvenido!",
             "token": token,
             "empresa": {"id": id_empresa_new, "nombre": nueva_empresa.nombre_comercial},
-            "usuario": {"id": id_usuario_new, "nombre": nuevo_usuario.nombre_completo}
+            "usuario": {"id": id_usuario_new, "nombre": f"{nuevo_usuario.nombres} {nuevo_usuario.apellido_paterno}"}
         }, 201
 
     except Exception as e:
