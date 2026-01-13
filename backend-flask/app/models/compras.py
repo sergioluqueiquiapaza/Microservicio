@@ -7,10 +7,11 @@ class Compra(db.Model):
     
     id_compra = db.Column(db.String(50), primary_key=True)
     
-    # Cascadas: Si se borra Empresa, Proveedor o Usuario, se borra la compra
     id_empresa = db.Column(db.String(50), db.ForeignKey('empresa.id_empresa', ondelete='CASCADE'))
     id_proveedor = db.Column(db.String(50), db.ForeignKey('proveedor.id_proveedor', ondelete='CASCADE'))
-    id_usuario = db.Column(db.String(50), db.ForeignKey('usuario.id_usuario', ondelete='CASCADE'))
+    
+    # CAMBIO: SET NULL para preservar historial
+    id_usuario = db.Column(db.String(50), db.ForeignKey('usuario.id_usuario', ondelete='SET NULL'))
     
     numero_compra = db.Column(db.String(100))
     subtotal = db.Column(db.Numeric(12, 2))
@@ -18,21 +19,25 @@ class Compra(db.Model):
     total = db.Column(db.Numeric(12, 2))
     fecha_compra = db.Column(db.DateTime, default=datetime.utcnow)
     fecha_entrega_estimada = db.Column(db.DateTime)
-    estado = db.Column(db.String(50)) # Solicitada, Recibida, Cancelada
+    estado = db.Column(db.String(50))
     observaciones = db.Column(db.Text)
 
     __table_args__ = (db.UniqueConstraint('id_empresa', 'numero_compra', name='uk_compra_empresa'),)
 
-    # Relaciones
     proveedor = db.relationship('app.models.inventario.Proveedor', backref='compras')
     usuario = db.relationship('app.models.seguridad.Usuario', backref='compras_registradas')
 
     def to_dict(self):
+        # Construir nombre usuario
+        nombre_usuario = None
+        if self.usuario:
+            nombre_usuario = f"{self.usuario.nombres} {self.usuario.apellido_paterno}".strip()
+
         return {
             'id_compra': self.id_compra,
             'id_empresa': self.id_empresa,
-            'nombre_proveedor': self.proveedor.nombre if self.proveedor else None,
-            'nombre_usuario': self.usuario.nombre_completo if self.usuario else None,
+            'nombre_proveedor': self.proveedor.razon_social if self.proveedor else None, # Corregido a razon_social
+            'nombre_usuario': nombre_usuario,
             'numero_compra': self.numero_compra,
             'subtotal': float(self.subtotal or 0),
             'impuesto': float(self.impuesto or 0),
@@ -48,7 +53,6 @@ class DetalleCompra(db.Model):
     
     id_detalle_compra = db.Column(db.String(50), primary_key=True)
     
-    # Cascada: Si se borra la compra o el producto, se elimina el detalle
     id_compra = db.Column(db.String(50), db.ForeignKey('compra.id_compra', ondelete='CASCADE'))
     id_producto = db.Column(db.String(50), db.ForeignKey('producto.id_producto', ondelete='CASCADE'))
     
@@ -56,7 +60,6 @@ class DetalleCompra(db.Model):
     precio_unitario = db.Column(db.Numeric(12, 2))
     subtotal = db.Column(db.Numeric(12, 2))
 
-    # Relación para traer nombre del producto fácilmente
     producto = db.relationship('Producto', backref='detalles_compras')
 
     def to_dict(self):

@@ -6,13 +6,21 @@ app = create_app()
 
 if __name__ == '__main__':
     # Esto asegura que las tablas se creen en la BD si no existen
-    # (Muy útil para desarrollo rápido antes de usar migraciones)
     with app.app_context():
-        # Importamos los modelos para que SQLAlchemy sepa que existen antes de crear las tablas
-        from app.models import empresa  # Asegúrate de importar tus modelos aquí
+        # --- IMPORTANTE: Importar TODOS los modelos aquí ---
+        # Si no los importas, SQLAlchemy no sabrá que existen y no creará las tablas.
+        
+        from app.models import saas        # <--- ¡CRÍTICO! Para las tablas nuevas
+        from app.models import empresa     # Configuración y Empresa
+        from app.models import seguridad   # Usuarios y Roles
+        from app.models import inventario  # Productos, Proveedores, Categorías
+        from app.models import ventas      # Clientes, Ventas, Pagos
+        from app.models import compras     # Compras
+        from app.models import soporte     # Notificaciones, Auditoría
+
+        # Crea todas las tablas definidas en los modelos importados
         db.create_all()
-        print(">>> Base de datos conectada y tablas verificadas.")
+        print(">>> Base de datos conectada. Tablas verificadas y creadas exitosamente.")
 
     # Inicia el servidor de desarrollo
-    # debug=True permite que el servidor se reinicie al guardar cambios en el código
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -1,6 +1,6 @@
 from app.extensions import db
-from app.models.empresa import Empresa, PlanSuscripcion, ConfiguracionEmpresa
-from datetime import datetime
+# IMPORTANTE: Ya no importamos PlanSuscripcion aquí porque se movió al módulo SaaS
+from app.models.empresa import Empresa, ConfiguracionEmpresa
 import uuid
 
 # ==========================================
@@ -12,23 +12,40 @@ def crear_empresa_service(data):
         if 'id_empresa' not in data:
             return {"error": "El campo 'id_empresa' es obligatorio"}, 400
 
-        # Mapeamos TODOS los campos posibles
+        # Validar si ya existe
+        if Empresa.query.get(data['id_empresa']):
+             return {"error": "Ya existe una empresa con ese ID"}, 400
+
         nueva_empresa = Empresa(
             id_empresa=data['id_empresa'],
+            # tenant_id se genera automáticamente en el modelo/BD
             nombre_comercial=data.get('nombre_comercial'),
             razon_social=data.get('razon_social'),
             nit_ruc=data.get('nit_ruc'),
             telefono=data.get('telefono'),
             email=data.get('email'),
             direccion=data.get('direccion'),
-            logo_url=data.get('logo_url'),            # <--- Agregado
-            horario_atencion=data.get('horario_atencion'), # <--- Agregado
-            activo=data.get('activo', True)           # <--- Agregado (por defecto True)
+            logo_url=data.get('logo_url'),
+            horario_atencion=data.get('horario_atencion'),
+            activo=data.get('activo', True)
         )
+        
+        # Opcional: Crear configuración por defecto automáticamente al crear empresa
+        config_default = ConfiguracionEmpresa(
+            id_config=str(uuid.uuid4()),
+            id_empresa=nueva_empresa.id_empresa,
+            moneda_default='BOB',
+            impuesto_iva=13.00,
+            formato_factura='carta',
+            notif_stock_minimo=True,
+            notif_ventas=True,
+            zona_horaria='America/La_Paz'
+        )
+        
         db.session.add(nueva_empresa)
+        db.session.add(config_default) # Guardamos también la config
         db.session.commit()
         
-        # Devolvemos el objeto completo usando to_dict() actualizado
         return {"message": "Empresa creada exitosamente", "empresa": nueva_empresa.to_dict()}, 201
     except Exception as e:
         db.session.rollback()
@@ -36,7 +53,6 @@ def crear_empresa_service(data):
 
 def obtener_empresas_service():
     empresas = Empresa.query.all()
-    # Ahora to_dict devolverá todos los campos
     return [e.to_dict() for e in empresas], 200
 
 def obtener_empresa_por_id_service(id_empresa):
@@ -51,16 +67,15 @@ def actualizar_empresa_service(id_empresa, data):
         return {"error": "Empresa no encontrada"}, 404
     
     try:
-        # Actualizamos TODOS los campos si vienen en el JSON
         if 'nombre_comercial' in data: empresa.nombre_comercial = data['nombre_comercial']
         if 'razon_social' in data: empresa.razon_social = data['razon_social']
         if 'nit_ruc' in data: empresa.nit_ruc = data['nit_ruc']
         if 'telefono' in data: empresa.telefono = data['telefono']
         if 'email' in data: empresa.email = data['email']
         if 'direccion' in data: empresa.direccion = data['direccion']
-        if 'logo_url' in data: empresa.logo_url = data['logo_url']              # <--- Agregado
-        if 'horario_atencion' in data: empresa.horario_atencion = data['horario_atencion'] # <--- Agregado
-        if 'activo' in data: empresa.activo = data['activo']                    # <--- Agregado
+        if 'logo_url' in data: empresa.logo_url = data['logo_url']
+        if 'horario_atencion' in data: empresa.horario_atencion = data['horario_atencion']
+        if 'activo' in data: empresa.activo = data['activo']
         
         db.session.commit()
         return {"message": "Empresa actualizada correctamente", "empresa": empresa.to_dict()}, 200
@@ -74,85 +89,13 @@ def eliminar_empresa_service(id_empresa):
         return {"error": "Empresa no encontrada"}, 404
     
     try:
+        # Al borrar la empresa, el CASCADE de la base de datos borrará TODO lo demás (Usuarios, Productos, Config, etc.)
         db.session.delete(empresa)
         db.session.commit()
-        return {"message": "Empresa eliminada correctamente"}, 200
+        return {"message": "Empresa y todos sus datos asociados eliminados correctamente"}, 200
     except Exception as e:
         db.session.rollback()
         return {"error": "Error al eliminar: " + str(e)}, 500
-
-# ... (El resto de funciones para Planes y Configuración se mantienen igual)
-# (Si quieres el código completo de Planes y Config repítelo del paso anterior, 
-#  o confirma si solo necesitabas cambiar la lógica de Empresa).
-
-# ==========================================
-#           PLAN SUSCRIPCION (CRUD)
-# ==========================================
-
-def crear_plan_service(data):
-    try:
-        nuevo_id = data.get('id_plan', str(uuid.uuid4()))
-        
-        # Mapeamos TODOS los campos del PDF
-        nuevo_plan = PlanSuscripcion(
-            id_plan=nuevo_id,
-            id_empresa=data['id_empresa'],
-            tipo_plan=data.get('tipo_plan', 'Basico'),
-            precio_mensual=data.get('precio_mensual', 0.00),
-            fecha_inicio=data.get('fecha_inicio'),             # Espera string 'YYYY-MM-DD'
-            fecha_vencimiento=data.get('fecha_vencimiento'),   # Espera string 'YYYY-MM-DD'
-            activo=data.get('activo', True),
-            max_usuarios=data.get('max_usuarios'),
-            max_productos=data.get('max_productos'),
-            acceso_reportes_avanzados=data.get('acceso_reportes_avanzados', False)
-        )
-        db.session.add(nuevo_plan)
-        db.session.commit()
-        return {"message": "Plan creado", "plan": nuevo_plan.to_dict()}, 201
-    except Exception as e:
-        return {"error": str(e)}, 500
-
-def obtener_planes_service():
-    planes = PlanSuscripcion.query.all()
-    return [p.to_dict() for p in planes], 200
-
-def obtener_plan_por_id_service(id_plan):
-    plan = PlanSuscripcion.query.get(id_plan)
-    if not plan:
-        return {"error": "Plan no encontrado"}, 404
-    return plan.to_dict(), 200
-
-def actualizar_plan_service(id_plan, data):
-    plan = PlanSuscripcion.query.get(id_plan)
-    if not plan:
-        return {"error": "Plan no encontrado"}, 404
-    
-    try:
-        if 'tipo_plan' in data: plan.tipo_plan = data['tipo_plan']
-        if 'precio_mensual' in data: plan.precio_mensual = data['precio_mensual']
-        if 'fecha_inicio' in data: plan.fecha_inicio = data['fecha_inicio']
-        if 'fecha_vencimiento' in data: plan.fecha_vencimiento = data['fecha_vencimiento']
-        if 'activo' in data: plan.activo = data['activo']
-        if 'max_usuarios' in data: plan.max_usuarios = data['max_usuarios']
-        if 'max_productos' in data: plan.max_productos = data['max_productos']
-        if 'acceso_reportes_avanzados' in data: plan.acceso_reportes_avanzados = data['acceso_reportes_avanzados']
-        
-        db.session.commit()
-        return {"message": "Plan actualizado", "plan": plan.to_dict()}, 200
-    except Exception as e:
-        return {"error": str(e)}, 500
-
-def eliminar_plan_service(id_plan):
-    plan = PlanSuscripcion.query.get(id_plan)
-    if not plan:
-        return {"error": "Plan no encontrado"}, 404
-    try:
-        db.session.delete(plan)
-        db.session.commit()
-        return {"message": "Plan eliminado"}, 200
-    except Exception as e:
-        return {"error": str(e)}, 500
-
 
 # ==========================================
 #        CONFIGURACION EMPRESA (CRUD)
@@ -160,6 +103,9 @@ def eliminar_plan_service(id_plan):
 
 def crear_config_service(data):
     try:
+        if 'id_empresa' not in data:
+             return {"error": "Falta id_empresa"}, 400
+
         nuevo_id = data.get('id_config', str(uuid.uuid4()))
         nueva_config = ConfiguracionEmpresa(
             id_config=nuevo_id,
@@ -175,6 +121,7 @@ def crear_config_service(data):
         db.session.commit()
         return {"message": "Configuración creada", "configuracion": nueva_config.to_dict()}, 201
     except Exception as e:
+        db.session.rollback()
         return {"error": str(e)}, 500
 
 def obtener_configs_service():
@@ -203,6 +150,7 @@ def actualizar_config_service(id_config, data):
         db.session.commit()
         return {"message": "Configuración actualizada", "configuracion": config.to_dict()}, 200
     except Exception as e:
+        db.session.rollback()
         return {"error": str(e)}, 500
 
 def eliminar_config_service(id_config):
@@ -214,4 +162,5 @@ def eliminar_config_service(id_config):
         db.session.commit()
         return {"message": "Configuración eliminada"}, 200
     except Exception as e:
+        db.session.rollback()
         return {"error": str(e)}, 500

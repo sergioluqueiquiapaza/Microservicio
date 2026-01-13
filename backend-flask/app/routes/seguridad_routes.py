@@ -1,8 +1,5 @@
 from flask import Blueprint, request, jsonify
-# Importamos el decorador y funciones de JWT
 from app.utils.security import role_required
-from flask_jwt_extended import create_access_token # Por si necesitas generar token manual
-
 from app.services.seguridad_service import (
     crear_rol_service, obtener_roles_service, obtener_rol_por_id_service,
     actualizar_rol_service, eliminar_rol_service,
@@ -20,14 +17,13 @@ seguridad_bp = Blueprint('seguridad_bp', __name__)
 
 @seguridad_bp.route('/auth/registro-empresa', methods=['POST'])
 def register_company():
-
+    # Este endpoint crea Empresa + Config + Usuario Dueño (Onboarding)
     data = request.get_json()
     response, status = registrar_empresa_y_dueno_service(data)
     return jsonify(response), status
 
 @seguridad_bp.route('/auth/login', methods=['POST'])
 def login():
-
     data = request.get_json()
     response, status = login_usuario_service(data)
     return jsonify(response), status
@@ -38,33 +34,33 @@ def login():
 # ==========================================
 
 @seguridad_bp.route('/roles', methods=['POST'])
-@role_required(['SUPERADMIN']) 
-# Solo el Superadmin define qué roles existen en el sistema SaaS
+@role_required(['SUPER_ADMIN']) 
+# Solo el SuperAdmin del SaaS define los roles globales del sistema
 def create_rol():
     response, status = crear_rol_service(request.get_json())
     return jsonify(response), status
 
 @seguridad_bp.route('/roles', methods=['GET'])
-@role_required(['SUPERADMIN', 'PROPIETARIO', 'ADMIN'])
-# El dueño necesita listar los roles para saber cuál asignarle a su empleado nuevo
+@role_required(['SUPER_ADMIN', 'PROPIETARIO', 'ADMIN'])
+# El dueño necesita listar los roles para asignarlos a sus empleados
 def get_roles():
     response, status = obtener_roles_service()
     return jsonify(response), status
 
 @seguridad_bp.route('/roles/<id_rol>', methods=['GET'])
-@role_required(['SUPERADMIN', 'PROPIETARIO', 'ADMIN'])
+@role_required(['SUPER_ADMIN', 'PROPIETARIO', 'ADMIN'])
 def get_rol(id_rol):
     response, status = obtener_rol_por_id_service(id_rol)
     return jsonify(response), status
 
 @seguridad_bp.route('/roles/<id_rol>', methods=['PUT'])
-@role_required(['SUPERADMIN'])
+@role_required(['SUPER_ADMIN'])
 def update_rol(id_rol):
     response, status = actualizar_rol_service(id_rol, request.get_json())
     return jsonify(response), status
 
 @seguridad_bp.route('/roles/<id_rol>', methods=['DELETE'])
-@role_required(['SUPERADMIN'])
+@role_required(['SUPER_ADMIN'])
 def delete_rol(id_rol):
     response, status = eliminar_rol_service(id_rol)
     return jsonify(response), status
@@ -76,7 +72,7 @@ def delete_rol(id_rol):
 
 @seguridad_bp.route('/usuarios', methods=['POST'])
 @role_required(['PROPIETARIO', 'ADMIN'])
-# Contratación: El dueño o el gerente crean cuentas para vendedores
+# Contratación: El dueño o el gerente crean cuentas para empleados
 def create_usuario():
     response, status = crear_usuario_service(request.get_json())
     return jsonify(response), status
@@ -96,7 +92,7 @@ def get_usuario(id_usuario):
 
 @seguridad_bp.route('/usuarios/<id_usuario>', methods=['PUT'])
 @role_required(['PROPIETARIO', 'ADMIN'])
-# Cambiar datos de un empleado (ej. cambiar contraseña o teléfono)
+# Actualizar datos del empleado
 def update_usuario(id_usuario):
     response, status = actualizar_usuario_service(id_usuario, request.get_json())
     return jsonify(response), status

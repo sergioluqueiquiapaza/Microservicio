@@ -1,8 +1,8 @@
 from app.extensions import db
 from app.models.seguridad import Rol, Usuario
-from werkzeug.security import generate_password_hash, check_password_hash # Para encriptar
-from flask_jwt_extended import create_access_token # Para generar token
 from app.models.empresa import Empresa, ConfiguracionEmpresa
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_jwt_extended import create_access_token
 import uuid
 from datetime import datetime
 
@@ -12,6 +12,11 @@ def crear_rol_service(data):
     try:
         # Generar ID si no viene
         nuevo_id = data.get('id_rol', str(uuid.uuid4()))
+        
+        # Validar duplicados
+        if Rol.query.get(nuevo_id):
+            return {"error": f"El rol {nuevo_id} ya existe"}, 400
+
         nuevo_rol = Rol(
             id_rol=nuevo_id,
             nombre=data.get('nombre'),
@@ -65,16 +70,21 @@ def eliminar_rol_service(id_rol):
 
 # ==================== CRUD USUARIO ====================
 
-# === MODIFICADO: CREAR USUARIO CON HASH ===
 def crear_usuario_service(data):
     try:
         # Validar obligatorios
         if not data.get('password'):
             return {"error": "La contraseña es obligatoria"}, 400
+        if not data.get('email'):
+            return {"error": "El email es obligatorio"}, 400
+
+        # Validar si el email ya existe en el sistema
+        if Usuario.query.filter_by(email=data['email']).first():
+             return {"error": "El email ya está registrado"}, 400
 
         nuevo_id = data.get('id_usuario', str(uuid.uuid4()))
         
-        # ENCRIPTAR CONTRASEÑA
+        # ENCRIPTAR CONTRASEÑA (Nunca guardar texto plano)
         pass_hash = generate_password_hash(data['password'])
         
         nuevo_usuario = Usuario(
@@ -83,7 +93,7 @@ def crear_usuario_service(data):
             id_rol=data['id_rol'],
             nombre_completo=data.get('nombre_completo'),
             email=data.get('email'),
-            password_hash=pass_hash, # GUARDAMOS EL HASH, NO EL TEXTO PLANO
+            password_hash=pass_hash, 
             telefono=data.get('telefono'),
             activo=True
         )
@@ -95,6 +105,7 @@ def crear_usuario_service(data):
         return {"error": str(e)}, 500
 
 def obtener_usuarios_service():
+    # Nota: En producción esto debería filtrar por empresa siempre
     usuarios = Usuario.query.all()
     return [u.to_dict() for u in usuarios], 200
 
@@ -114,7 +125,10 @@ def actualizar_usuario_service(id_usuario, data):
         if 'id_rol' in data: usuario.id_rol = data['id_rol']
         if 'telefono' in data: usuario.telefono = data['telefono']
         if 'activo' in data: usuario.activo = data['activo']
-        if 'password_hash' in data: usuario.password_hash = data['password_hash']
+        
+        # Si actualizan password, hay que hashearlo de nuevo
+        if 'password' in data and data['password']: 
+            usuario.password_hash = generate_password_hash(data['password'])
         
         db.session.commit()
         return {"message": "Usuario actualizado", "usuario": usuario.to_dict()}, 200
@@ -134,7 +148,8 @@ def eliminar_usuario_service(id_usuario):
         db.session.rollback()
         return {"error": str(e)}, 500
     
-# === NUEVO: LOGIN ===
+# ==================== LOGIN Y AUTH ====================
+
 def login_usuario_service(data):
     email = data.get('email')
     password = data.get('password')
@@ -144,20 +159,19 @@ def login_usuario_service(data):
         
     usuario = Usuario.query.filter_by(email=email).first()
     
-    # Verificar usuario y contraseña
+    # Verificar usuario existe y contraseña coincide con el hash
     if usuario and check_password_hash(usuario.password_hash, password):
         if not usuario.activo:
-            return {"error": "Usuario inactivo"}, 401
+            return {"error": "Usuario inactivo. Contacte al administrador."}, 401
             
-        # Crear Token con información extra (Claims)
-        # Esto nos permite saber quién es sin consultar la BD a cada rato
+        # Crear Token JWT con Claims adicionales (Información extra dentro del token)
         additional_claims = {
             "rol": usuario.id_rol, 
             "id_empresa": usuario.id_empresa
         }
         token = create_access_token(identity=usuario.id_usuario, additional_claims=additional_claims)
         
-        # Actualizar último acceso
+        # Actualizar fecha de último acceso
         usuario.ultimo_acceso = datetime.utcnow()
         db.session.commit()
         
@@ -165,8 +179,10 @@ def login_usuario_service(data):
             "message": "Login exitoso",
             "token": token,
             "usuario": {
+                "id_usuario": usuario.id_usuario,
                 "nombre": usuario.nombre_completo,
-                "rol": usuario.id_rol
+                "rol": usuario.id_rol,
+                "id_empresa": usuario.id_empresa
             }
         }, 200
     
@@ -174,16 +190,16 @@ def login_usuario_service(data):
 
 def registrar_empresa_y_dueno_service(data):
     """
-    Crea la empresa, el usuario propietario y la configuración inicial en una sola transacción.
-    Endpoint PÚBLICO.
+    Endpoint PÚBLICO para el registro de nuevas cuentas (SaaS Onboarding).
+    Crea: Empresa -> Configuración -> Usuario (Admin) en una sola transacción.
     """
     try:
-        # 1. Validaciones básicas
+        # 1. Validaciones
         if not data.get('nombre_empresa'): return {"error": "Falta nombre empresa"}, 400
         if not data.get('email'): return {"error": "Falta email"}, 400
         if not data.get('password'): return {"error": "Falta password"}, 400
 
-        # Validar si el email ya existe
+        # Verificar email único
         if Usuario.query.filter_by(email=data['email']).first():
             return {"error": "El email ya está registrado"}, 400
 
@@ -192,21 +208,33 @@ def registrar_empresa_y_dueno_service(data):
         id_usuario_new = str(uuid.uuid4())
         id_config_new = str(uuid.uuid4())
 
-        # 3. Crear Objeto EMPRESA
+        # 3. Crear EMPRESA
         nueva_empresa = Empresa(
             id_empresa=id_empresa_new,
             nombre_comercial=data['nombre_empresa'],
-            email=data['email'], # Email de contacto de la empresa
+            email=data['email'],
             activo=True
-            # tenant_id se genera solo en BD o puedes generarlo aquí
         )
 
-        # 4. Crear Objeto USUARIO (Propietario)
+        # 4. Crear CONFIGURACIÓN POR DEFECTO
+        nueva_config = ConfiguracionEmpresa(
+            id_config=id_config_new,
+            id_empresa=id_empresa_new,
+            moneda_default='BOB', 
+            impuesto_iva=13.00,
+            notif_stock_minimo=True
+        )
+
+        # 5. Crear USUARIO DUEÑO
+        # IMPORTANTE: Asumimos que el rol 'PROPIETARIO' o 'ADMIN' ya existe en la BD (seed).
+        # Si no tienes roles creados, esto fallará por FK.
+        rol_inicial = 'PROPIETARIO' 
+        
         pass_hash = generate_password_hash(data['password'])
         nuevo_usuario = Usuario(
             id_usuario=id_usuario_new,
             id_empresa=id_empresa_new,
-            id_rol='PROPIETARIO', # <--- AQUÍ LE DAMOS EL PODER
+            id_rol=rol_inicial, 
             nombre_completo=data.get('nombre_completo', 'Administrador'),
             email=data['email'],
             password_hash=pass_hash,
@@ -214,26 +242,15 @@ def registrar_empresa_y_dueno_service(data):
             activo=True
         )
 
-        # 5. (Opcional) Crear CONFIGURACIÓN por defecto
-        # Esto es muy útil para que no empiece con la configuración vacía
-        nueva_config = ConfiguracionEmpresa(
-            id_config=id_config_new,
-            id_empresa=id_empresa_new,
-            moneda_default='BOB', # O la que prefieras
-            impuesto_iva=13.00,
-            notif_stock_minimo=True
-        )
-
-        # 6. Guardar todo en una transacción
+        # 6. Guardar todo (Atomicidad)
         db.session.add(nueva_empresa)
-        db.session.add(nuevo_usuario)
         db.session.add(nueva_config)
+        db.session.add(nuevo_usuario)
         
         db.session.commit()
 
-        # 7. (Opcional) Auto-Login: Devolver token inmediatamente
-        # Para que no tenga que loguearse después de registrarse
-        additional_claims = {"rol": "PROPIETARIO", "id_empresa": id_empresa_new}
+        # 7. Auto-Login (Generar token para entrar directo)
+        additional_claims = {"rol": rol_inicial, "id_empresa": id_empresa_new}
         token = create_access_token(identity=id_usuario_new, additional_claims=additional_claims)
 
         return {
@@ -245,4 +262,4 @@ def registrar_empresa_y_dueno_service(data):
 
     except Exception as e:
         db.session.rollback()
-        return {"error": str(e)}, 500
+        return {"error": "Error en el registro: " + str(e)}, 500

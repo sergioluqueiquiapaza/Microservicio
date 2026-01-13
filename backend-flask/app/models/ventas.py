@@ -6,10 +6,9 @@ class Cliente(db.Model):
     __tablename__ = 'cliente'
     
     id_cliente = db.Column(db.String(50), primary_key=True)
-    # Si se borra la empresa, se borran los clientes
     id_empresa = db.Column(db.String(50), db.ForeignKey('empresa.id_empresa', ondelete='CASCADE'))
     
-    nombre_completo = db.Column(db.String(255))
+    razon_social = db.Column(db.String(255)) # Actualizado
     nit_ci = db.Column(db.String(50))
     telefono = db.Column(db.String(50))
     email = db.Column(db.String(100))
@@ -23,7 +22,7 @@ class Cliente(db.Model):
         return {
             'id_cliente': self.id_cliente,
             'id_empresa': self.id_empresa,
-            'nombre_completo': self.nombre_completo,
+            'razon_social': self.razon_social,
             'nit_ci': self.nit_ci,
             'telefono': self.telefono,
             'email': self.email,
@@ -39,12 +38,11 @@ class Venta(db.Model):
     
     id_venta = db.Column(db.String(50), primary_key=True)
     
-    # CASCADES: Si se borra Empresa, Cliente o Usuario, se borra la venta.
-    # (Nota: En contabilidad real, a veces es mejor 'SET NULL' para no perder historial, 
-    # pero pediste CASCADE, así que así lo configuramos).
     id_empresa = db.Column(db.String(50), db.ForeignKey('empresa.id_empresa', ondelete='CASCADE'))
     id_cliente = db.Column(db.String(50), db.ForeignKey('cliente.id_cliente', ondelete='CASCADE'))
-    id_usuario = db.Column(db.String(50), db.ForeignKey('usuario.id_usuario', ondelete='CASCADE'))
+    
+    # CAMBIO: SET NULL para preservar historial si se borra el usuario
+    id_usuario = db.Column(db.String(50), db.ForeignKey('usuario.id_usuario', ondelete='SET NULL'))
     
     numero_factura = db.Column(db.String(100))
     subtotal = db.Column(db.Numeric(12, 2))
@@ -52,23 +50,26 @@ class Venta(db.Model):
     descuento = db.Column(db.Numeric(12, 2))
     total = db.Column(db.Numeric(12, 2))
     fecha_venta = db.Column(db.DateTime, default=datetime.utcnow)
-    estado = db.Column(db.Boolean, default=True) # True = Valida, False = Anulada
-    tipo_venta = db.Column(db.String(50)) # Contado, Crédito, etc.
+    estado = db.Column(db.Boolean, default=True) 
+    tipo_venta = db.Column(db.String(50)) 
     observaciones = db.Column(db.Text)
 
-    # Restricción Unique
     __table_args__ = (db.UniqueConstraint('id_empresa', 'numero_factura', name='uk_factura_empresa'),)
 
-    # Relaciones para facilitar consultas
     cliente = db.relationship('Cliente', backref=db.backref('ventas', cascade="all, delete-orphan"))
     usuario = db.relationship('app.models.seguridad.Usuario', backref='ventas_realizadas')
 
     def to_dict(self):
+        # Construir nombre completo del vendedor para mostrar
+        nombre_vendedor = None
+        if self.usuario:
+            nombre_vendedor = f"{self.usuario.nombres} {self.usuario.apellido_paterno}".strip()
+
         return {
             'id_venta': self.id_venta,
             'id_empresa': self.id_empresa,
-            'nombre_cliente': self.cliente.nombre_completo if self.cliente else None,
-            'nombre_vendedor': self.usuario.nombre_completo if self.usuario else None,
+            'nombre_cliente': self.cliente.razon_social if self.cliente else None, # Corregido a razon_social
+            'nombre_vendedor': nombre_vendedor,
             'numero_factura': self.numero_factura,
             'subtotal': float(self.subtotal or 0),
             'impuesto': float(self.impuesto or 0),
@@ -84,8 +85,6 @@ class DetalleVenta(db.Model):
     __tablename__ = 'detalle_venta'
     
     id_detalle_venta = db.Column(db.String(50), primary_key=True)
-    
-    # Cascada: Si se borra la Venta O el Producto, se borra el detalle
     id_venta = db.Column(db.String(50), db.ForeignKey('venta.id_venta', ondelete='CASCADE'))
     id_producto = db.Column(db.String(50), db.ForeignKey('producto.id_producto', ondelete='CASCADE'))
     
@@ -94,7 +93,6 @@ class DetalleVenta(db.Model):
     subtotal = db.Column(db.Numeric(12, 2))
     descuento_linea = db.Column(db.Numeric(12, 2), default=0.00)
 
-    # Relación para obtener datos del producto (nombre, código) fácilmente
     producto = db.relationship('Producto', backref='detalles_ventas')
 
     def to_dict(self):
@@ -113,16 +111,14 @@ class Pago(db.Model):
     __tablename__ = 'pago'
     
     id_pago = db.Column(db.String(50), primary_key=True)
-    
-    # Cascada: Si se borra la Venta, se borran sus pagos
     id_venta = db.Column(db.String(50), db.ForeignKey('venta.id_venta', ondelete='CASCADE'))
     
-    metodo_pago = db.Column(db.String(50)) # Efectivo, Tarjeta, QR
+    metodo_pago = db.Column(db.String(50))
     monto_pagado = db.Column(db.Numeric(12, 2))
     fecha_pago = db.Column(db.DateTime, default=datetime.utcnow)
     comprobante_url = db.Column(db.String(255))
     numero_transaccion = db.Column(db.String(100))
-    estado = db.Column(db.String(50)) # Pendiente, Aprobado, Rechazado
+    estado = db.Column(db.String(50)) 
 
     def to_dict(self):
         return {

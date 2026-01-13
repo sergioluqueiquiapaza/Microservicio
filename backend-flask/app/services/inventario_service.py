@@ -67,19 +67,20 @@ def eliminar_categoria_service(id_categoria):
 # ==================== CRUD PROVEEDOR ====================
 def crear_proveedor_service(data):
     try:
-        if 'id_empresa' not in data or 'nombre' not in data:
-            return {"error": "Faltan datos obligatorios (id_empresa, nombre)"}, 400
+        # CAMBIO: nombre -> razon_social
+        if 'id_empresa' not in data or 'razon_social' not in data:
+            return {"error": "Faltan datos obligatorios (id_empresa, razon_social)"}, 400
 
         nuevo_id = data.get('id_proveedor', str(uuid.uuid4()))
         prov = Proveedor(
             id_proveedor=nuevo_id,
             id_empresa=data['id_empresa'],
-            nombre=data.get('nombre'),          # Antes era razon_social
+            razon_social=data.get('razon_social'), # CAMBIO
             telefono=data.get('telefono'),
             email=data.get('email'),
             direccion=data.get('direccion'),
-            nit_ruc=data.get('nit_ruc'),        # Campo Nuevo
-            forma_pago=data.get('forma_pago'),  # Campo Nuevo
+            nit_ruc=data.get('nit_ruc'),
+            forma_pago=data.get('forma_pago'),
             activo=data.get('activo', True)
         )
         db.session.add(prov)
@@ -101,7 +102,8 @@ def actualizar_proveedor_service(id_prov, data):
     prov = Proveedor.query.get(id_prov)
     if not prov: return {"error": "No encontrado"}, 404
     try:
-        if 'nombre' in data: prov.nombre = data['nombre']
+        # CAMBIO: nombre -> razon_social
+        if 'razon_social' in data: prov.razon_social = data['razon_social']
         if 'telefono' in data: prov.telefono = data['telefono']
         if 'email' in data: prov.email = data['email']
         if 'direccion' in data: prov.direccion = data['direccion']
@@ -138,7 +140,7 @@ def crear_producto_service(data):
             id_producto=nuevo_id,
             id_empresa=data['id_empresa'],
             id_categoria=data.get('id_categoria'),
-            codigo_producto=data.get('codigo_producto'), # Antes codigo_barras
+            codigo_producto=data.get('codigo_producto'),
             nombre=data.get('nombre'),
             descripcion=data.get('descripcion'),
             precio_venta=data.get('precio_venta', 0),
@@ -164,6 +166,7 @@ def obtener_producto_id_service(id_prod):
     
     # Devolver también los proveedores asociados con sus precios especiales
     resultado = prod.to_dict()
+    # rel.to_dict() ya devuelve 'nombre_proveedor' (que viene de razon_social) gracias al cambio en models
     resultado['proveedores_asociados'] = [rel.to_dict() for rel in prod.proveedores_vinculados]
     return resultado, 200
 
@@ -210,7 +213,7 @@ def asignar_proveedor_a_producto_service(id_producto, data):
         relacion = ProductoProveedor(
             id_producto=id_producto,
             id_proveedor=id_proveedor,
-            precio_compra=data.get('precio_compra', 0), # Precio específico del proveedor
+            precio_compra=data.get('precio_compra', 0),
             tiempo_entrega_dias=data.get('tiempo_entrega_dias', 0),
             proveedor_preferido=data.get('proveedor_preferido', False)
         )
@@ -242,7 +245,6 @@ def actualizar_relacion_service(id_producto, id_proveedor, data):
         return {"error": "La relación entre este producto y proveedor no existe"}, 404
     
     try:
-        # Actualizamos solo los campos que vengan en el JSON
         if 'precio_compra' in data: 
             relacion.precio_compra = data['precio_compra']
         
@@ -262,17 +264,14 @@ def obtener_productos_por_proveedor_service(id_proveedor):
     """
     Lista todos los productos que vende un proveedor específico.
     """
-    # Verificamos que el proveedor exista primero
     prov = Proveedor.query.get(id_proveedor)
     if not prov:
         return {"error": "Proveedor no encontrado"}, 404
         
-    # Usamos la relación inversa definida en el modelo Proveedor (productos_vinculados)
     lista_productos = []
+    # Usamos la relación definida en el modelo
     for relacion in prov.productos_vinculados:
-        # relacion.producto existe gracias al backref en el modelo Producto
         datos_prod = relacion.producto.to_dict()
-        # Agregamos los datos específicos de la compra a este proveedor
         datos_prod['datos_compra'] = {
             'precio_pactado': float(relacion.precio_compra),
             'tiempo_entrega': relacion.tiempo_entrega_dias,
@@ -287,19 +286,18 @@ def obtener_todas_las_relaciones_service():
     Lista TODAS las relaciones (útil para reportes globales de compras).
     """
     relaciones = ProductoProveedor.query.all()
-    # Enriquecemos la respuesta con nombres para que sea legible
     resultado = []
     for rel in relaciones:
         dic = rel.to_dict()
         dic['nombre_producto'] = rel.producto.nombre
-        dic['nombre_proveedor'] = rel.proveedor.nombre
+        # CAMBIO: Usamos razon_social en lugar de nombre
+        dic['nombre_proveedor'] = rel.proveedor.razon_social
         resultado.append(dic)
     return resultado, 200
 
 # ==================== CRUD INVENTARIO ====================
 def crear_inventario_service(data):
     try:
-        # Validar que venga el producto
         if 'id_producto' not in data:
             return {"error": "id_producto es obligatorio"}, 400
             
@@ -320,7 +318,6 @@ def crear_inventario_service(data):
         return {"error": str(e)}, 500
 
 def obtener_inventarios_service():
-    # Idealmente filtrar por producto o empresa en el futuro
     items = Inventario.query.all()
     return [i.to_dict() for i in items], 200
 

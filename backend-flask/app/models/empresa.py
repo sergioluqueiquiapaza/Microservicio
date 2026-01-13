@@ -18,55 +18,26 @@ class Empresa(db.Model):
     fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)
     activo = db.Column(db.Boolean, default=True)
 
-    # cascade="all, delete-orphan" para borrar planes/config si se borra la empresa
-    planes = db.relationship('PlanSuscripcion', backref='empresa', lazy=True, cascade="all, delete-orphan")
     configuracion = db.relationship('ConfiguracionEmpresa', backref='empresa', uselist=False, lazy=True, cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
             'id_empresa': self.id_empresa,
-            'tenant_id': self.tenant_id,  # Importante para multi-tenancy
+            'tenant_id': self.tenant_id, 
             'nombre_comercial': self.nombre_comercial,
             'razon_social': self.razon_social,
             'nit_ruc': self.nit_ruc,
             'telefono': self.telefono,
             'email': self.email,
             'direccion': self.direccion,
-            'logo_url': self.logo_url,      # Ahora el frontend podrá ver el logo
+            'logo_url': self.logo_url,     
             'horario_atencion': self.horario_atencion,
             'fecha_registro': self.fecha_registro.isoformat() if self.fecha_registro else None,
             'activo': self.activo
         }
 
-# --- PLAN SUSCRIPCION (Actualizado completo) ---
-class PlanSuscripcion(db.Model):
-    __tablename__ = 'plan_suscripcion'
-    id_plan = db.Column(db.String(50), primary_key=True)
-    id_empresa = db.Column(db.String(50), db.ForeignKey('empresa.id_empresa'), nullable=False)
-    tipo_plan = db.Column(db.String(50))
-    precio_mensual = db.Column(db.Numeric(12, 2))
-    fecha_inicio = db.Column(db.Date)
-    fecha_vencimiento = db.Column(db.Date)
-    activo = db.Column(db.Boolean, default=True)
-    max_usuarios = db.Column(db.Integer)
-    max_productos = db.Column(db.Integer)
-    acceso_reportes_avanzados = db.Column(db.Boolean)
 
-    def to_dict(self):
-        return {
-            'id_plan': self.id_plan,
-            'id_empresa': self.id_empresa,
-            'tipo_plan': self.tipo_plan,
-            'precio_mensual': float(self.precio_mensual) if self.precio_mensual else 0.0,
-            'fecha_inicio': str(self.fecha_inicio) if self.fecha_inicio else None,
-            'fecha_vencimiento': str(self.fecha_vencimiento) if self.fecha_vencimiento else None,
-            'activo': self.activo,
-            'max_usuarios': self.max_usuarios,
-            'max_productos': self.max_productos,
-            'acceso_reportes_avanzados': self.acceso_reportes_avanzados
-        }
-
-# --- CONFIGURACION EMPRESA (Actualizado completo) ---
+# --- CONFIGURACION EMPRESA ---
 class ConfiguracionEmpresa(db.Model):
     __tablename__ = 'configuracion_empresa'
     id_config = db.Column(db.String(50), primary_key=True)

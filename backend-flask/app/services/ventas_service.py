@@ -5,14 +5,17 @@ import uuid
 # ==================== CRUD CLIENTE ====================
 def crear_cliente_service(data):
     try:
+        # Validar empresa y nombre (razon_social)
         if 'id_empresa' not in data:
             return {"error": "id_empresa es obligatorio"}, 400
             
         nuevo_id = data.get('id_cliente', str(uuid.uuid4()))
+        
+        # CAMBIO: nombre_completo -> razon_social
         cliente = Cliente(
             id_cliente=nuevo_id,
             id_empresa=data['id_empresa'],
-            nombre_completo=data.get('nombre_completo'),
+            razon_social=data.get('razon_social'), 
             nit_ci=data.get('nit_ci'),
             telefono=data.get('telefono'),
             email=data.get('email'),
@@ -38,7 +41,8 @@ def actualizar_cliente_service(id_cli, data):
     cliente = Cliente.query.get(id_cli)
     if not cliente: return {"error": "No encontrado"}, 404
     try:
-        if 'nombre_completo' in data: cliente.nombre_completo = data['nombre_completo']
+        # CAMBIO: nombre_completo -> razon_social
+        if 'razon_social' in data: cliente.razon_social = data['razon_social']
         if 'nit_ci' in data: cliente.nit_ci = data['nit_ci']
         if 'telefono' in data: cliente.telefono = data['telefono']
         if 'email' in data: cliente.email = data['email']
@@ -65,6 +69,7 @@ def eliminar_cliente_service(id_cli):
 # ==================== CRUD VENTA ====================
 def crear_venta_service(data):
     try:
+        # id_usuario es requerido al crear, aunque luego la BD permita NULL si se borra el usuario
         required = ['id_empresa', 'id_cliente', 'id_usuario', 'total']
         for campo in required:
             if campo not in data:
