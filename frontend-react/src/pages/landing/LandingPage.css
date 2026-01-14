@@ -1,0 +1,393 @@
+/* src/pages/landing/LandingPage.css - DISEÑO MODERNO */
+.landing-page {
+ min-height: 100vh;
+ width: 100%;
+ overflow-x: hidden;
+}
+
+/* Navbar moderno */
+.landing-page .navbar {
+ backdrop-filter: blur(12px);
+ background-color: rgba(255, 255, 255, 0.95) !important;
+ box-shadow: var(--shadow-sm);
+ transition: all var(--transition-base);
+}
+
+.landing-page .navbar-brand {
+ font-weight: var(--font-weight-bold);
+ font-size: var(--font-size-xl);
+ color: var(--text-primary);
+ transition: all var(--transition-fast);
+}
+
+.landing-page .navbar-brand:hover {
+ color: var(--color-primary);
+ transform: scale(1.02);
+}
+
+.landing-page .nav-link {
+ color: var(--text-secondary);
+ font-weight: var(--font-weight-medium);
+ transition: all var(--transition-fast);
+ padding: var(--spacing-2) var(--spacing-4);
+ border-radius: var(--border-radius);
+}
+
+.landing-page .nav-link:hover {
+ color: var(--color-primary);
+ background-color: var(--color-primary-subtle);
+}
+
+/* Hero section moderno con gradiente */
+.hero-section {
+ background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #dbeafe 100%);
+ width: 100%;
+ position: relative;
+ overflow: hidden;
+ min-height: 75vh; /* Añadido */
+}
+
+.hero-section::before {
+ content: '';
+ position: absolute;
+ top: -50%;
+ right: -20%;
+ width: 600px;
+ height: 600px;
+ background: radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, transparent 70%);
+ border-radius: 50%;
+ animation: float 20s ease-in-out infinite;
+}
+
+.hero-section::after {
+ content: '';
+ position: absolute;
+ bottom: -30%;
+ left: -10%;
+ width: 500px;
+ height: 500px;
+ background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, transparent 70%);
+ border-radius: 50%;
+ animation: float 25s ease-in-out infinite reverse;
+}
+
+@keyframes float {
+ 0%, 100% {
+ transform: translateY(0) rotate(0deg);
+ }
+ 50% {
+ transform: translateY(-20px) rotate(5deg);
+ }
+}
+
+/* CONTENEDOR DE TEXTO - SOLUCIÓN AL PROBLEMA */
+.hero-section .text-center.text-lg-start {
+ position: relative;
+ z-index: 3; /* Asegura que el texto esté sobre el mockup */
+}
+
+/* Mockup 3D - CONTROL DE SOBREPOSICIÓN */
+.hero-section .d-none.d-lg-block {
+ position: relative;
+ z-index: 2; /* Menor prioridad que el texto */
+}
+
+/* Asegurar que el mockup no se sobreponga en pantallas pequeñas */
+@media (max-width: 992px) {
+ .hero-section .d-none.d-lg-block {
+ display: none !important; /* Se mantiene oculto en pantallas pequeñas como estaba */
+ }
+ 
+ .hero-section .text-center.text-lg-start {
+ text-align: center !important;
+ padding: 0 1rem;
+ }
+}
+
+/* Títulos hero */
+.hero-section h1 {
+ animation: fadeInUp 0.8s ease-out;
+ font-weight: var(--font-weight-extrabold);
+ letter-spacing: -0.03em;
+ line-height: 1.1;
+ position: relative;
+ z-index: 4; /* Máxima prioridad */
+}
+
+.hero-section .text-primary {
+ background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+ -webkit-background-clip: text;
+ -webkit-text-fill-color: transparent;
+ background-clip: text;
+ position: relative;
+ z-index: 4;
+}
+
+.hero-section p {
+ animation: fadeInUp 1s ease-out;
+ font-size: var(--font-size-lg);
+ color: var(--text-secondary);
+ line-height: var(--line-height-relaxed);
+ position: relative;
+ z-index: 4; /* Máxima prioridad para el texto */
+ margin-bottom: 2rem; /* Espacio adicional para separar del mockup */
+}
+
+.hero-section .btn {
+ animation: fadeInUp 1.2s ease-out;
+ padding: var(--spacing-3) var(--spacing-6);
+ font-weight: var(--font-weight-semibold);
+ border-radius: var(--border-radius-full);
+ box-shadow: var(--shadow-md);
+ transition: all var(--transition-base);
+ position: relative;
+ z-index: 4; /* Los botones también sobre el mockup */
+}
+
+.hero-section .btn:hover {
+ transform: translateY(-2px);
+ box-shadow: var(--shadow-lg);
+}
+
+.hero-section .btn-primary {
+ background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+ border: none;
+}
+
+@keyframes fadeInUp {
+ from {
+ opacity: 0;
+ transform: translateY(30px);
+ }
+ to {
+ opacity: 1;
+ transform: translateY(0);
+ }
+}
+
+/* Cards de características modernos */
+.card {
+ transition: all var(--transition-base);
+ border: 1px solid var(--border-color);
+ border-radius: var(--border-radius-xl);
+ background: var(--bg-white);
+ position: relative;
+ overflow: hidden;
+}
+
+.card::before {
+ content: '';
+ position: absolute;
+ top: 0;
+ left: 0;
+ right: 0;
+ height: 4px;
+ background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%);
+ transform: scaleX(0);
+ transition: transform var(--transition-base);
+ transform-origin: left;
+}
+
+.card:hover::before {
+ transform: scaleX(1);
+}
+
+.card:hover {
+ transform: translateY(-8px);
+ box-shadow: var(--shadow-xl);
+ border-color: var(--color-primary-light);
+}
+
+.card .text-primary {
+ transition: all var(--transition-base);
+}
+
+.card:hover .text-primary {
+ transform: scale(1.1) rotate(5deg);
+}
+
+/* Secciones */
+section {
+ width: 100%;
+ padding: var(--spacing-16) 0;
+}
+
+section h2 {
+ font-weight: var(--font-weight-bold);
+ color: var(--text-primary);
+ letter-spacing: -0.025em;
+ margin-bottom: var(--spacing-8);
+}
+
+/* Cards de planes modernos */
+.card.border-success {
+ border-width: 2px;
+ border-color: var(--color-success);
+ box-shadow: 0 0 0 4px var(--color-success-light);
+}
+
+.card .bg-success {
+ background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-hover) 100%) !important;
+ font-weight: var(--font-weight-semibold);
+ letter-spacing: 0.025em;
+}
+
+.card .display-4 {
+ font-weight: var(--font-weight-extrabold);
+ background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+ -webkit-background-clip: text;
+ -webkit-text-fill-color: transparent;
+ background-clip: text;
+}
+
+.card .list-unstyled li {
+ padding: var(--spacing-2) 0;
+ transition: all var(--transition-fast);
+}
+
+.card:hover .list-unstyled li {
+ transform: translateX(4px);
+}
+
+/* Footer moderno */
+footer {
+ background: linear-gradient(135deg, var(--bg-dark) 0%, #1e293b 100%);
+ color: var(--text-inverse);
+}
+
+footer a {
+ color: var(--text-inverse);
+ opacity: 0.8;
+ transition: all var(--transition-fast);
+}
+
+footer a:hover {
+ opacity: 1;
+ color: var(--color-accent);
+}
+
+/* Badges de check */
+.text-success {
+ color: var(--color-success) !important;
+ transition: transform var(--transition-fast);
+}
+
+.card:hover .text-success {
+ transform: scale(1.2);
+}
+
+/* Mockup 3D mejorado - LIMITAR ALTURA */
+.hero-section [style*="animation: float"] {
+ box-shadow: var(--shadow-xl);
+ border: 1px solid var(--border-color);
+ max-height: 400px; /* Limitar altura máxima */
+ overflow: hidden;
+}
+
+.hero-section .position-relative {
+ max-height: 400px;
+}
+
+.hero-section .bg-primary {
+ background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%) !important;
+}
+
+/* Responsive moderno */
+@media (max-width: 992px) {
+ .hero-section h1 {
+ font-size: var(--font-size-3xl);
+ text-align: center;
+ }
+ 
+ .hero-section .lead {
+ font-size: var(--font-size-base);
+ text-align: center;
+ }
+ 
+ .hero-section .btn {
+ padding: var(--spacing-2) var(--spacing-5);
+ font-size: var(--font-size-sm);
+ }
+ 
+ section {
+ padding: var(--spacing-12) 0;
+ }
+ 
+ .card {
+ margin-bottom: var(--spacing-4);
+ }
+}
+
+/* Para pantallas muy pequeñas */
+@media (max-width: 576px) {
+ .hero-section {
+ min-height: 85vh; /* Más altura en móviles */
+ }
+ 
+ .hero-section h1 {
+ font-size: var(--font-size-2xl);
+ }
+ 
+ .hero-section .lead {
+ font-size: var(--font-size-sm);
+ padding: 0 0.5rem;
+ }
+}
+
+/* Animaciones adicionales */
+@keyframes pulse-glow {
+ 0%, 100% {
+ box-shadow: 0 0 20px rgba(37, 99, 235, 0.4);
+ }
+ 50% {
+ box-shadow: 0 0 40px rgba(37, 99, 235, 0.6);
+ }
+}
+
+.btn-primary:hover {
+ animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Glassmorphism effect para navbar */
+@supports (backdrop-filter: blur(12px)) {
+ .landing-page .navbar {
+ background-color: rgba(255, 255, 255, 0.8) !important;
+ }
+}
+
+/* Mejorar spacing */
+.py-5 {
+ padding-top: var(--spacing-16) !important;
+ padding-bottom: var(--spacing-16) !important;
+}
+
+.py-4 {
+ padding-top: var(--spacing-8) !important;
+ padding-bottom: var(--spacing-8) !important;
+}
+
+.mb-5 {
+ margin-bottom: var(--spacing-12) !important;
+}
+
+.mb-4 {
+ margin-bottom: var(--spacing-8) !important;
+}
+
+.gap-3 {
+ gap: var(--spacing-4) !important;
+}
+
+.gap-4 {
+ gap: var(--spacing-6) !important;
+}
+
+/* Sticky navbar con efecto */
+.sticky-top {
+ transition: all var(--transition-base);
+}
+
+.sticky-top.scrolled {
+ box-shadow: var(--shadow-md);
+ padding: var(--spacing-2) 0;
+}

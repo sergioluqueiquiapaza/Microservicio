@@ -1,0 +1,94 @@
+/* src/pages/dashboard/usuarios/UsuarioForm.css */
+
+.usuario-form-page {
+  animation: fadeIn 0.4s ease-in;
+}
+
+.page-header {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Estilo de los labels */
+.form-label {
+  font-weight: var(--font-weight-medium);
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+/* Estilo de inputs con error */
+.form-control.is-invalid,
+.form-select.is-invalid {
+  border-color: var(--color-danger);
+  background-image: none;
+}
+
+.invalid-feedback {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: var(--font-size-sm);
+}
+
+/* Switch personalizado */
+.form-check-input:checked {
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+/* Información de roles */
+.role-info {
+  padding: 1rem;
+  background-color: var(--bg-light);
+  border-radius: var(--border-radius);
+  margin-bottom: 1rem;
+}
+
+.role-info:last-child {
+  margin-bottom: 0;
+}
+
+.role-info h6 {
+  margin-bottom: 0.75rem;
+}
+
+.role-info ul {
+  padding-left: 1.25rem;
+  margin-bottom: 0;
+}
+
+.role-info li {
+  margin-bottom: 0.5rem;
+}
+
+/* Botones del formulario */
+.btn-primary,
+.btn-outline-secondary {
+  min-width: 120px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-header {
+    text-align: center;
+  }
+
+  .btn-primary,
+  .btn-outline-secondary {
+    width: 100%;
+  }
+
+  .d-flex.gap-2 {
+    flex-direction: column-reverse;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

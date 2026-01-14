@@ -1,0 +1,284 @@
+/* src/styles/hotfix.css - CORRECCIONES ESPECÍFICAS */
+/* Importar este archivo DESPUÉS de variables.css en main.jsx */
+
+/* ===================================
+   CORRECCIÓN 1: Evitar movimiento en formularios
+   =================================== */
+
+/* Evitar que labels y inputs se muevan en hover */
+form *,
+.card form *,
+form label,
+form input,
+form select,
+form textarea,
+form .form-label,
+form .form-control,
+form .form-select,
+form .form-text,
+form small,
+form span,
+form div {
+ transform: none !important;
+}
+
+.card:hover form *,
+.card:hover label,
+.card:hover input,
+.card:hover select,
+.card:hover textarea {
+ transform: none !important;
+}
+
+/* Específico para página de registro */
+.registro-empresa-page .card:hover *,
+.registro-empresa-page form *,
+.registro-empresa-page label,
+.registro-empresa-page input,
+.registro-empresa-page select {
+ transform: none !important;
+}
+
+/* ===================================
+   CORRECCIÓN 2: Evitar movimiento en productos/precios
+   =================================== */
+
+/* Evitar que precios y números se muevan */
+.product-top-card *,
+.product-top-card h6,
+.product-top-card .badge,
+.product-top-card div,
+.product-top-card span,
+.product-top-card small,
+.product-top-card strong,
+.product-top-card .fw-bold,
+.product-top-card .text-primary {
+ transform: none !important;
+}
+
+.product-top-card:hover * {
+ transform: none !important;
+}
+
+/* Stats cards - evitar que números se muevan */
+.stat-card h3,
+.stat-card p,
+.stat-card .badge,
+.stat-card span,
+.stat-card div:not(.stat-icon) {
+ transform: none !important;
+}
+
+.stat-card:hover h3,
+.stat-card:hover p,
+.stat-card:hover .badge,
+.stat-card:hover span {
+ transform: none !important;
+}
+
+/* Tablas - evitar que contenido se mueva */
+.table td,
+.table th,
+.table td *,
+.table th * {
+ transform: none !important;
+}
+
+.table tbody tr:hover td,
+.table tbody tr:hover td * {
+ transform: none !important;
+}
+
+/* ===================================
+   CORRECCIÓN 3: Navbar Admin SaaS - Texto Blanco
+   =================================== */
+
+/* Asegurar que TODO el texto en el header de admin sea blanco */
+.admin-header,
+.admin-header *,
+.admin-header h1,
+.admin-header h2,
+.admin-header h3,
+.admin-header h4,
+.admin-header h5,
+.admin-header h6,
+.admin-header p,
+.admin-header span,
+.admin-header small,
+.admin-header div,
+.admin-header a {
+ color: var(--text-white) !important;
+}
+
+/* Mantener opacidad en small */
+.admin-header small {
+ opacity: 0.9;
+}
+
+/* Botones en header admin */
+.admin-header .btn,
+.admin-header .btn-outline-light,
+.admin-header button {
+ color: var(--text-white) !important;
+ border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.admin-header .btn:hover,
+.admin-header .btn-outline-light:hover {
+ background-color: rgba(255, 255, 255, 0.15) !important;
+ border-color: rgba(255, 255, 255, 0.5) !important;
+ color: var(--text-white) !important;
+}
+
+/* Container dentro del admin header */
+.admin-header .container-fluid,
+.admin-header .container-fluid * {
+ color: var(--text-white) !important;
+}
+
+/* ===================================
+   CORRECCIÓN 4: Lista y Card Items
+   =================================== */
+
+/* Evitar que items de lista se muevan su contenido */
+.list-group-item *,
+.list-group-item span,
+.list-group-item div,
+.list-group-item small,
+.list-group-item strong {
+ transform: none !important;
+}
+
+.list-group-item:hover * {
+ transform: none !important;
+}
+
+/* ===================================
+   CORRECCIÓN 5: Cards en General
+   =================================== */
+
+/* Solo permitir transform en el card completo, no en su contenido */
+.card:hover > *:not(.card-header):not(.card-body):not(.card-footer) {
+ transform: none !important;
+}
+
+.card-body *,
+.card-header *,
+.card-footer * {
+ transform: none !important;
+}
+
+/* ===================================
+   CORRECCIÓN 6: Modals
+   =================================== */
+
+/* Evitar movimiento en contenido de modals */
+.modal-body *,
+.modal-header *,
+.modal-footer *,
+.modal form * {
+ transform: none !important;
+}
+
+/* ===================================
+   CORRECCIÓN 7: Alerts
+   =================================== */
+
+/* Evitar movimiento en alertas */
+.alert *,
+.alert span,
+.alert div,
+.alert small {
+ transform: none !important;
+}
+
+/* ===================================
+   EXCEPCIONES - Lo que SÍ puede moverse
+   =================================== */
+
+/* SOLO estos elementos pueden tener transform en hover */
+.stat-icon,
+.notification-icon,
+.user-avatar,
+.sidebar-link svg,
+.nav-icon-btn svg,
+.btn svg,
+.card::before,
+.card::after,
+.product-top-card::before {
+ /* Estos SÍ pueden moverse */
+}
+
+/* ===================================
+   CORRECCIÓN 8: Badges
+   =================================== */
+
+/* Badges no deben moverse su contenido */
+.badge,
+.badge * {
+ transform: none !important;
+}
+
+.badge:hover,
+.badge:hover * {
+ transform: none !important;
+}
+
+/* ===================================
+   CORRECCIÓN 9: Forms específicos
+   =================================== */
+
+/* Registro empresa - NADA se mueve */
+.registro-empresa-page *:not(.btn):not(.card) {
+ transform: none !important;
+}
+
+/* Usuario form - NADA se mueve excepto botones y card */
+.usuario-form-page *:not(.btn):not(.card) {
+ transform: none !important;
+}
+
+/* ===================================
+   CORRECCIÓN 10: Navegación
+   =================================== */
+
+/* Links de navegación - solo cambio de color, no transform */
+.nav-link,
+.nav-link *,
+.dropdown-item,
+.dropdown-item * {
+ transform: none !important;
+}
+
+.nav-link:hover *,
+.dropdown-item:hover * {
+ transform: none !important;
+}
+
+/* ===================================
+   REGLA GENERAL DE SEGURIDAD
+   =================================== */
+
+/* Texto NUNCA debe moverse */
+h1, h2, h3, h4, h5, h6,
+p, span, small, strong, em, i, b,
+label, input, textarea, select,
+td, th, li, a {
+ transform: none !important;
+}
+
+/* En hover tampoco */
+*:hover > h1,
+*:hover > h2,
+*:hover > h3,
+*:hover > h4,
+*:hover > h5,
+*:hover > h6,
+*:hover > p,
+*:hover > span,
+*:hover > small,
+*:hover > strong,
+*:hover > label,
+*:hover > input {
+ transform: none !important;
+}

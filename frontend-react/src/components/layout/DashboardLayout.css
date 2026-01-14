@@ -1,0 +1,66 @@
+/* src/components/layout/DashboardLayout.css */
+.dashboard-layout {
+ min-height: 100vh;
+ background-color: var(--bg-body);
+}
+
+/* Main Content */
+.dashboard-main {
+ margin-top: 57px; /* Altura del header */
+ margin-left: 0;
+ min-height: calc(100vh - 57px);
+ transition: margin-left var(--transition-base);
+}
+
+/* En desktop, dejar espacio para el sidebar */
+@media (min-width: 992px) {
+ .dashboard-main {
+ margin-left: 260px; /* Ancho del sidebar */
+ }
+}
+
+.dashboard-content {
+ padding: 2rem;
+ animation: fadeIn 0.3s ease-in;
+ /* CORRECCIÓN: Eliminar max-width para usar todo el ancho disponible */
+ width: 100%;
+}
+
+@keyframes fadeIn {
+ from {
+ opacity: 0;
+ transform: translateY(10px);
+ }
+ to {
+ opacity: 1;
+ transform: translateY(0);
+ }
+}
+
+/* Botón toggle sidebar móvil */
+.sidebar-toggle-btn {
+ position: fixed;
+ bottom: 2rem;
+ right: 2rem;
+ width: 56px;
+ height: 56px;
+ border-radius: 50%;
+ box-shadow: var(--shadow-lg);
+ z-index: var(--z-sticky);
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ border: 1px solid var(--border-color);
+}
+
+.sidebar-toggle-btn:hover {
+ transform: scale(1.1);
+ box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+ .dashboard-content {
+ padding: 1rem;
+ }
+}

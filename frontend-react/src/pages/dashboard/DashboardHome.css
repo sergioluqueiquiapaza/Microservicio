@@ -1,0 +1,361 @@
+/* src/pages/dashboard/DashboardHome.css - DISEÑO MODERNO */
+.dashboard-home {
+ animation: fadeIn 0.4s ease-in;
+}
+
+/* Tarjetas de estadísticas modernas */
+.stat-card {
+ transition: all var(--transition-base);
+ cursor: default;
+ border: 1px solid var(--border-color);
+ border-radius: var(--border-radius-xl);
+ background: var(--bg-white);
+ position: relative;
+ overflow: hidden;
+}
+
+.stat-card::before {
+ content: '';
+ position: absolute;
+ top: 0;
+ left: 0;
+ right: 0;
+ height: 3px;
+ background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%);
+ transform: scaleX(0);
+ transition: transform var(--transition-base);
+ transform-origin: left;
+}
+
+.stat-card:hover::before {
+ transform: scaleX(1);
+}
+
+.stat-card:hover {
+ transform: translateY(-4px);
+ box-shadow: var(--shadow-lg);
+ border-color: var(--color-primary-light);
+}
+
+.stat-icon {
+ width: 56px;
+ height: 56px;
+ border-radius: var(--border-radius-lg);
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ font-size: 1.5rem;
+ box-shadow: var(--shadow-sm);
+ transition: all var(--transition-base);
+}
+
+.stat-card:hover .stat-icon {
+ transform: scale(1.1) rotate(5deg);
+}
+
+.stat-icon.bg-primary-subtle {
+ background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary-subtle) 100%);
+ color: var(--color-primary);
+}
+
+.stat-icon.bg-success-subtle {
+ background: linear-gradient(135deg, var(--color-success-light) 0%, #d1fae5 100%);
+ color: var(--color-success);
+}
+
+.stat-icon.bg-info-subtle {
+ background: linear-gradient(135deg, var(--color-info-light) 0%, #cffafe 100%);
+ color: var(--color-info);
+}
+
+.stat-icon.bg-warning-subtle {
+ background: linear-gradient(135deg, var(--color-warning-light) 0%, #fef3c7 100%);
+ color: var(--color-warning);
+}
+
+/* Números de estadísticas */
+.stat-card h3 {
+ font-size: var(--font-size-3xl);
+ font-weight: var(--font-weight-bold);
+ color: var(--text-primary);
+ margin-bottom: var(--spacing-1);
+ letter-spacing: -0.025em;
+}
+
+.stat-card p {
+ color: var(--text-secondary);
+ font-size: var(--font-size-sm);
+ font-weight: var(--font-weight-medium);
+ margin: 0;
+}
+
+/* Badges de cambio */
+.stat-card .badge {
+ font-size: var(--font-size-xs);
+ padding: 0.25rem 0.625rem;
+ font-weight: var(--font-weight-semibold);
+}
+
+/* Progress bar moderna */
+.progress-thin {
+ height: 6px;
+ border-radius: var(--border-radius-full);
+ background-color: var(--bg-light);
+ overflow: hidden;
+}
+
+.progress-thin .progress-bar {
+ border-radius: var(--border-radius-full);
+ transition: width var(--transition-slow);
+}
+
+/* Lista de productos con stock bajo */
+.list-group-item {
+ border-left: none;
+ border-right: none;
+ padding: var(--spacing-4);
+ transition: all var(--transition-fast);
+ border-bottom: 1px solid var(--border-color);
+}
+
+.list-group-item:first-child {
+ border-top: none;
+}
+
+.list-group-item:last-child {
+ border-bottom: none;
+}
+
+.list-group-item:hover {
+ background-color: var(--bg-subtle);
+ padding-left: calc(var(--spacing-4) + 8px);
+}
+
+/* Tabla de ventas moderna */
+.table {
+ font-size: var(--font-size-sm);
+}
+
+.table thead th {
+ background-color: var(--bg-subtle);
+ color: var(--text-secondary);
+ font-weight: var(--font-weight-semibold);
+ text-transform: uppercase;
+ letter-spacing: 0.05em;
+ font-size: var(--font-size-xs);
+ padding: var(--spacing-3) var(--spacing-4);
+ border-bottom: 2px solid var(--border-color);
+}
+
+.table tbody tr {
+ transition: all var(--transition-fast);
+ border-bottom: 1px solid var(--border-color);
+}
+
+.table tbody tr:hover {
+ background-color: var(--bg-subtle);
+ transform: scale(1.01);
+ box-shadow: var(--shadow-xs);
+}
+
+.table tbody td {
+ padding: var(--spacing-4);
+ vertical-align: middle;
+}
+
+/* Card de producto top moderno */
+.product-top-card {
+ background: linear-gradient(135deg, var(--bg-white) 0%, var(--bg-subtle) 100%);
+ transition: all var(--transition-base);
+ border: 1px solid var(--border-color);
+ border-radius: var(--border-radius-lg);
+ padding: var(--spacing-5);
+ position: relative;
+ overflow: hidden;
+}
+
+.product-top-card::before {
+ content: '';
+ position: absolute;
+ top: 0;
+ left: 0;
+ width: 4px;
+ height: 100%;
+ background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-accent) 100%);
+ transform: scaleY(0);
+ transition: transform var(--transition-base);
+}
+
+.product-top-card:hover::before {
+ transform: scaleY(1);
+}
+
+.product-top-card:hover {
+ box-shadow: var(--shadow-md);
+ transform: translateY(-2px);
+ border-color: var(--color-primary-light);
+}
+
+/* CORRECCIÓN: Evitar que el contenido de productos se mueva */
+.product-top-card * {
+ transform: none !important;
+}
+
+.product-top-card h6,
+.product-top-card .badge,
+.product-top-card div,
+.product-top-card span,
+.product-top-card small,
+.product-top-card strong {
+ transform: none !important;
+}
+
+/* Headers de cards */
+.card-header {
+ background-color: var(--bg-white);
+ border-bottom: 1px solid var(--border-color);
+ padding: var(--spacing-4) var(--spacing-5);
+ font-weight: var(--font-weight-semibold);
+}
+
+.card-header h5 {
+ margin: 0;
+ font-size: var(--font-size-lg);
+ font-weight: var(--font-weight-semibold);
+ color: var(--text-primary);
+}
+
+/* Iconos en notificaciones */
+.notification-icon {
+ width: 48px;
+ height: 48px;
+ border-radius: var(--border-radius);
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ font-size: 1.5rem;
+ flex-shrink: 0;
+ box-shadow: var(--shadow-xs);
+}
+
+/* Empty states */
+.text-center.text-muted {
+ padding: var(--spacing-8) var(--spacing-4);
+}
+
+.text-center.text-muted svg {
+ opacity: 0.3;
+ margin-bottom: var(--spacing-4);
+}
+
+/* Botones de acción en tablas */
+.table .btn-link {
+ padding: var(--spacing-2);
+ color: var(--text-secondary);
+ transition: all var(--transition-fast);
+ border-radius: var(--border-radius);
+}
+
+.table .btn-link:hover {
+ color: var(--color-primary);
+ background-color: var(--color-primary-subtle);
+ transform: scale(1.1);
+}
+
+/* Responsive moderno */
+@media (max-width: 768px) {
+ .stat-card h3 {
+ font-size: var(--font-size-2xl);
+ }
+ 
+ .table {
+ font-size: var(--font-size-xs);
+ }
+ 
+ .table thead {
+ display: none;
+ }
+ 
+ .table tbody tr {
+ display: block;
+ margin-bottom: var(--spacing-4);
+ border: 1px solid var(--border-color);
+ border-radius: var(--border-radius-lg);
+ padding: var(--spacing-4);
+ box-shadow: var(--shadow-sm);
+ }
+ 
+ .table tbody tr:hover {
+ transform: none;
+ }
+ 
+ .table tbody td {
+ display: flex;
+ justify-content: space-between;
+ padding: var(--spacing-2) 0;
+ border: none;
+ }
+ 
+ .table tbody td::before {
+ content: attr(data-label);
+ font-weight: var(--font-weight-semibold);
+ margin-right: var(--spacing-3);
+ color: var(--text-secondary);
+ font-size: var(--font-size-xs);
+ text-transform: uppercase;
+ letter-spacing: 0.05em;
+ }
+ 
+ .product-top-card {
+ padding: var(--spacing-4);
+ }
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+ from {
+ opacity: 0;
+ transform: translateY(20px);
+ }
+ to {
+ opacity: 1;
+ transform: translateY(0);
+ }
+}
+
+@keyframes pulse {
+ 0%, 100% {
+ opacity: 1;
+ }
+ 50% {
+ opacity: 0.8;
+ }
+}
+
+/* Loading states */
+.loading {
+ animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Mejorar contraste de badges */
+.badge.bg-light {
+ border: 1px solid var(--border-color);
+}
+
+/* Spacing mejorado */
+.g-3 {
+ gap: var(--spacing-4) !important;
+}
+
+/* Cards con borde superior colorido */
+.card.border-warning {
+ border-top: 3px solid var(--color-warning);
+}
+
+.card.border-success {
+ border-top: 3px solid var(--color-success);
+}
+
+.card.border-primary {
+ border-top: 3px solid var(--color-primary);
+}
